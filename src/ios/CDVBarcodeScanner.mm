@@ -119,6 +119,36 @@
     return result;
 }
 
+-(void)scan:(CDVInvokedUrlCommand*)command {
+    CDVbcsProcessor* processor;
+    NSString*       capabilityError;
+
+    // We allow the user to define an alternate xib file for loading the overlay.
+    NSString *overlayXib = nil;
+    if ( [command.arguments count] == 2 )
+    {
+        overlayXib = [command.arguments objectAtIndex:1];
+    }
+    
+    capabilityError = [self isScanNotPossible];
+    if (capabilityError) {
+        [self returnError:capabilityError callback:command.callbackId];
+        return;
+    }
+    
+    
+    
+    processor = [[CDVbcsProcessor alloc]
+                 initWithPlugin:self
+                 callback:command.callbackId
+                 parentViewController:self.viewController
+                 alterateOverlayXib:overlayXib
+                 ];
+    
+    // queue [processor scanBarcode] to run on the event loop
+    [processor performSelector:@selector(scanBarcode) withObject:nil afterDelay:0];
+}
+
 //--------------------------------------------------------------------------
 - (void)scan:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options {
     CDVbcsProcessor* processor;
@@ -253,14 +283,15 @@ parentViewController:(UIViewController*)parentViewController
     self.viewController.orientationDelegate = self.plugin.viewController;
     
     // delayed [self openDialog];
-    [self performSelector:@selector(openDialog) withObject:nil afterDelay:1];
+    [self performSelector:@selector(openDialog) withObject:nil afterDelay:0];
 }
 
 //--------------------------------------------------------------------------
 - (void)openDialog {
     [self.parentViewController
-     presentModalViewController:self.viewController
+     presentViewController:self.viewController
      animated:YES
+     completion:nil
      ];
 }
 
